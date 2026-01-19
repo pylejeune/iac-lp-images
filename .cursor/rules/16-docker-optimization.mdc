@@ -1,0 +1,178 @@
+# Règles Docker - Optimisation Avancée
+
+## 🎯 Optimisation des Builds
+
+### Cache Docker
+- Utiliser `--cache-from` pour les builds CI/CD
+- Préférer `COPY --chown` au lieu de `RUN chown` séparé
+- Utiliser `--mount=type=cache` pour les gestionnaires de paquets
+
+### BuildKit
+- **TOUJOURS** activer BuildKit : `DOCKER_BUILDKIT=1`
+- Utiliser les features avancées de BuildKit (cache mounts, secrets)
+- Préférer `docker buildx` pour les builds multi-plateformes
+
+### Parallel Builds
+- Utiliser des builds parallèles pour les monorepos
+- Séparer les services en Dockerfiles distincts si possible
+- Utiliser docker-compose avec `build.parallel: true`
+
+## 📊 Réduction de la Taille
+
+### Multi-Stage Builds
+```dockerfile
+# Stage 1: Dépendances uniquement
+FROM node:18-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Stage 2: Build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Stage 3: Runtime minimal
+FROM node:18-alpine
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+CMD ["node", "dist/index.js"]
+```
+
+### Suppression des Fichiers Inutiles
+```dockerfile
+# ✅ BON : Supprimer dans la même couche
+RUN apt-get update && \
+    apt-get install -y package && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# ✅ BON : Nettoyer les caches npm/pip
+RUN npm ci --only=production && \
+    npm cache clean --force && \
+    rm -rf /tmp/*
+```
+
+### Images Distroless
+- Utiliser `gcr.io/distroless/base` ou `gcr.io/distroless/nodejs` pour la production
+- Réduit drastiquement la surface d'attaque
+- Nécessite des builds statiques
+
+## ⚡ Performance Runtime
+
+### Variables d'Environnement
+- Utiliser `ENV` pour les variables qui changent rarement
+- Préférer les secrets Docker pour les données sensibles
+- Éviter les variables d'environnement volumineuses
+
+### Volumes
+- Utiliser des volumes nommés pour les données persistantes
+- Préférer `tmpfs` pour les données temporaires
+- Éviter de monter des répertoires entiers si possible
+
+### Networking
+- Utiliser des réseaux Docker personnalisés
+- Préférer les noms de services aux IPs
+- Utiliser `--network-alias` pour la découverte de services
+
+## 🔧 Optimisation Docker Compose
+
+### Ressources
+```yaml
+services:
+  app:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+```
+
+### Health Checks
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+```
+
+### Dependencies
+- Utiliser `depends_on` avec conditions de santé
+- Éviter les dépendances circulaires
+- Utiliser `restart: unless-stopped` pour la production
+
+## 📦 Gestion des Images
+
+### Tags Sémantiques
+- Utiliser des tags versionnés : `app:v1.2.3`
+- Créer des tags `latest` uniquement pour la dernière version stable
+- Utiliser des tags de commit pour les builds CI/CD
+
+### Image Scanning
+- Scanner régulièrement avec `docker scan`
+- Intégrer dans le pipeline CI/CD
+- Utiliser des outils comme Trivy ou Snyk
+
+### Registry
+- Utiliser un registry privé pour les images internes
+- Implémenter la rétention automatique des images
+- Utiliser des tags immutables pour la production
+
+## 🚀 CI/CD Optimization
+
+### Build Cache
+```bash
+# Récupérer le cache
+docker pull $IMAGE:cache || true
+docker build \
+  --cache-from $IMAGE:cache \
+  --tag $IMAGE:$TAG \
+  --tag $IMAGE:cache \
+  .
+```
+
+### Build Arguments
+- Utiliser `ARG` pour les variables de build
+- Ne pas exposer de secrets via `ARG`
+- Utiliser `--build-arg` avec précaution
+
+### Layer Optimization
+- Minimiser le nombre de layers
+- Grouper les commandes RUN
+- Utiliser `&&` pour chaîner les commandes
+
+## 📈 Monitoring et Métriques
+
+### Labels
+- Ajouter des labels pour le tracking
+```dockerfile
+LABEL maintainer="team@example.com"
+LABEL version="1.0.0"
+LABEL description="Application web"
+```
+
+### Logging
+- Configurer la rotation des logs
+- Utiliser des drivers de logging appropriés
+- Limiter la taille des logs
+
+## ✅ Checklist d'Optimisation
+
+- [ ] BuildKit activé
+- [ ] Multi-stage build utilisé
+- [ ] Cache des layers optimisé
+- [ ] Taille de l'image minimale
+- [ ] Healthcheck configuré
+- [ ] Utilisateur non-root
+- [ ] Secrets gérés correctement
+- [ ] `.dockerignore` complet
+- [ ] Tags sémantiques utilisés
+- [ ] Image scannée pour vulnérabilités

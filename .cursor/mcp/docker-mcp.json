@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-docker"
+      ],
+      "description": "MCP server pour interagir avec Docker (conteneurs, images, réseaux, volumes)"
+    },
+    "docker-compose": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-docker-compose"
+      ],
+      "description": "MCP server pour gérer docker-compose (services, stacks, orchestration)"
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-kubernetes"
+      ],
+      "description": "MCP server pour Kubernetes (pods, services, deployments) - utile pour Docker Swarm et K8s"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/pierreyves.lejeune/Sites/terraform-lp-images"
+      ],
+      "description": "MCP server pour accéder au système de fichiers (utile pour lire/écrire Dockerfiles, docker-compose.yml)"
+    }
+  }
+}

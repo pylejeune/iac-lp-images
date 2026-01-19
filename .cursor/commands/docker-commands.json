@@ -1,0 +1,208 @@
+{
+  "commands": [
+    {
+      "name": "Docker: Build Image",
+      "command": "docker build -t ${input:imageName}:${input:imageTag} .",
+      "description": "Construire une image Docker avec un nom et un tag",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Build with BuildKit",
+      "command": "DOCKER_BUILDKIT=1 docker build -t ${input:imageName}:${input:imageTag} .",
+      "description": "Construire une image Docker avec BuildKit activé",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Build Multi-Platform",
+      "command": "docker buildx build --platform linux/amd64,linux/arm64 -t ${input:imageName}:${input:imageTag} --push .",
+      "description": "Construire une image Docker pour plusieurs plateformes",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Run Container",
+      "command": "docker run -d --name ${input:containerName} -p ${input:hostPort}:${input:containerPort} ${input:imageName}:${input:imageTag}",
+      "description": "Lancer un conteneur Docker en mode détaché",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Run with Environment",
+      "command": "docker run -d --name ${input:containerName} -e ${input:envVar} -p ${input:hostPort}:${input:containerPort} ${input:imageName}:${input:imageTag}",
+      "description": "Lancer un conteneur avec des variables d'environnement",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Stop All Containers",
+      "command": "docker stop $(docker ps -aq)",
+      "description": "Arrêter tous les conteneurs en cours d'exécution",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Remove All Containers",
+      "command": "docker rm $(docker ps -aq)",
+      "description": "Supprimer tous les conteneurs arrêtés",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Clean System",
+      "command": "docker system prune -a --volumes -f",
+      "description": "Nettoyer complètement le système Docker (images, conteneurs, volumes, réseaux)",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: View Logs",
+      "command": "docker logs -f ${input:containerName}",
+      "description": "Afficher les logs d'un conteneur en temps réel",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Execute Command",
+      "command": "docker exec -it ${input:containerName} ${input:command}",
+      "description": "Exécuter une commande dans un conteneur en cours d'exécution",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Inspect Image",
+      "command": "docker inspect ${input:imageName}:${input:imageTag}",
+      "description": "Inspecter les détails d'une image Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Image Size",
+      "command": "docker images ${input:imageName} --format '{{.Repository}}:{{.Tag}} - {{.Size}}'",
+      "description": "Afficher la taille d'une image Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Scan Image",
+      "command": "docker scan ${input:imageName}:${input:imageTag}",
+      "description": "Scanner une image Docker pour les vulnérabilités",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker Compose: Up",
+      "command": "docker-compose up -d",
+      "description": "Démarrer tous les services définis dans docker-compose.yml",
+      "category": "Docker Compose"
+    },
+    {
+      "name": "Docker Compose: Down",
+      "command": "docker-compose down",
+      "description": "Arrêter et supprimer tous les services",
+      "category": "Docker Compose"
+    },
+    {
+      "name": "Docker Compose: Build",
+      "command": "docker-compose build --no-cache",
+      "description": "Construire toutes les images sans utiliser le cache",
+      "category": "Docker Compose"
+    },
+    {
+      "name": "Docker Compose: Logs",
+      "command": "docker-compose logs -f ${input:serviceName}",
+      "description": "Afficher les logs d'un service spécifique",
+      "category": "Docker Compose"
+    },
+    {
+      "name": "Docker Compose: Restart Service",
+      "command": "docker-compose restart ${input:serviceName}",
+      "description": "Redémarrer un service spécifique",
+      "category": "Docker Compose"
+    },
+    {
+      "name": "Docker: Health Check",
+      "command": "docker inspect --format='{{.State.Health.Status}}' ${input:containerName}",
+      "description": "Vérifier le statut de santé d'un conteneur",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Stats",
+      "command": "docker stats ${input:containerName}",
+      "description": "Afficher les statistiques d'utilisation des ressources d'un conteneur",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Export Image",
+      "command": "docker save ${input:imageName}:${input:imageTag} | gzip > ${input:imageName}-${input:imageTag}.tar.gz",
+      "description": "Exporter une image Docker vers un fichier tar.gz",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Load Image",
+      "command": "docker load < ${input:imageFile}",
+      "description": "Charger une image Docker depuis un fichier tar",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Tag Image",
+      "command": "docker tag ${input:sourceImage}:${input:sourceTag} ${input:targetImage}:${input:targetTag}",
+      "description": "Créer un nouveau tag pour une image existante",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Push Image",
+      "command": "docker push ${input:imageName}:${input:imageTag}",
+      "description": "Pousser une image vers un registry Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Pull Image",
+      "command": "docker pull ${input:imageName}:${input:imageTag}",
+      "description": "Télécharger une image depuis un registry Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Build with No Cache",
+      "command": "docker build --no-cache -t ${input:imageName}:${input:imageTag} .",
+      "description": "Construire une image sans utiliser le cache",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: List Running Containers",
+      "command": "docker ps",
+      "description": "Lister tous les conteneurs en cours d'exécution",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: List All Containers",
+      "command": "docker ps -a",
+      "description": "Lister tous les conteneurs (y compris arrêtés)",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: List Images",
+      "command": "docker images",
+      "description": "Lister toutes les images Docker locales",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Remove Dangling Images",
+      "command": "docker image prune -f",
+      "description": "Supprimer les images non utilisées (dangling)",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Remove Unused Images",
+      "command": "docker image prune -a -f",
+      "description": "Supprimer toutes les images non utilisées",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Network List",
+      "command": "docker network ls",
+      "description": "Lister tous les réseaux Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Volume List",
+      "command": "docker volume ls",
+      "description": "Lister tous les volumes Docker",
+      "category": "Docker"
+    },
+    {
+      "name": "Docker: Remove Unused Volumes",
+      "command": "docker volume prune -f",
+      "description": "Supprimer tous les volumes non utilisés",
+      "category": "Docker"
+    }
+  ]
+}

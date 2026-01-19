@@ -1,0 +1,130 @@
+# Règles Docker - Bonnes Pratiques et Optimisation
+
+## 🐳 Principes Fondamentaux
+
+### Images Multi-Stage
+- **TOUJOURS** utiliser des builds multi-stage pour réduire la taille des images finales
+- Séparer les dépendances de build des dépendances de runtime
+- Utiliser des images de base minimales (Alpine, Distroless) pour la production
+
+### Ordre des Instructions
+- Placer les instructions qui changent le moins souvent en haut du Dockerfile
+- Copier les fichiers de dépendances (package.json, requirements.txt) avant le code source
+- Installer les dépendances avant de copier le code applicatif
+
+### Cache des Layers
+- Organiser les instructions pour maximiser l'utilisation du cache Docker
+- Grouper les commandes RUN pour réduire le nombre de layers
+- Utiliser `--mount=type=cache` pour les gestionnaires de paquets
+
+## 📦 Gestion des Dépendances
+
+### Installation des Paquets
+```dockerfile
+# ✅ BON : Utiliser --mount=type=cache pour apt/yum
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
+    package1 package2 && \
+    rm -rf /var/lib/apt/lists/*
+
+# ✅ BON : Nettoyer les caches après installation
+RUN npm ci --only=production && npm cache clean --force
+```
+
+### Fichiers de Dépendances
+- Copier d'abord les fichiers de dépendances (package.json, requirements.txt, etc.)
+- Installer les dépendances avant de copier le code source
+- Utiliser des fichiers .dockerignore pour exclure node_modules, __pycache__, etc.
+
+## 🔒 Sécurité
+
+### Utilisateur Non-Root
+- **TOUJOURS** créer et utiliser un utilisateur non-root dans les conteneurs
+```dockerfile
+# ✅ BON
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+USER appuser
+```
+
+### Secrets et Variables d'Environnement
+- **JAMAIS** de secrets en dur dans les Dockerfiles
+- Utiliser des secrets Docker ou des variables d'environnement injectées au runtime
+- Utiliser `.dockerignore` pour exclure les fichiers sensibles
+
+### Images de Base
+- Utiliser des images officielles et maintenues
+- Préférer des images avec des tags spécifiques (pas `latest`)
+- Vérifier régulièrement les vulnérabilités avec `docker scan`
+
+## ⚡ Optimisation des Performances
+
+### Taille des Images
+- Utiliser des images de base minimales (Alpine Linux, Distroless)
+- Supprimer les fichiers inutiles dans la même couche RUN
+- Éviter d'installer des outils de développement en production
+
+### Build Context
+- Utiliser `.dockerignore` pour exclure les fichiers inutiles
+- Minimiser le contexte de build (ne pas copier tout le répertoire)
+- Utiliser des volumes pour les données persistantes
+
+### Health Checks
+- **TOUJOURS** définir un HEALTHCHECK pour les services critiques
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+```
+
+## 📝 Structure des Dockerfiles
+
+### Template Recommandé
+```dockerfile
+# Stage 1: Build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Stage 2: Production
+FROM node:18-alpine
+WORKDIR /app
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --chown=nodejs:nodejs package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+USER nodejs
+EXPOSE 3000
+HEALTHCHECK --interval=30s CMD node healthcheck.js
+CMD ["node", "server.js"]
+```
+
+## 🚫 Anti-Patterns à Éviter
+
+### ❌ À NE JAMAIS FAIRE
+- Utiliser `apt-get upgrade` (augmente la taille et les vulnérabilités)
+- Copier tout le répertoire avec `COPY . .` sans `.dockerignore`
+- Exécuter en tant que root
+- Utiliser `latest` comme tag d'image
+- Installer des outils de debug en production
+- Exposer tous les ports
+- Utiliser `RUN apt-get update` sans nettoyer les caches
+
+## 🔍 Vérifications
+
+### Avant de Commiter
+- [ ] Image buildée avec succès
+- [ ] Taille de l'image optimisée
+- [ ] Aucun secret en dur
+- [ ] Utilisateur non-root configuré
+- [ ] HEALTHCHECK défini si nécessaire
+- [ ] `.dockerignore` à jour
+- [ ] Tags d'images spécifiques (pas `latest`)
+
+## 📚 Références
+
+- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+- [Dockerfile Best Practices](https://docs.docker.com/develop/dev-best-practices/dockerfile_best-practices/)
+- [Security Best Practices](https://docs.docker.com/engine/security/)
