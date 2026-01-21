@@ -25,6 +25,10 @@ fi
 
 echo "✅ Nginx démarré (PID: $NGINX_PID)"
 
+# Configurer npm pour l'utilisateur appuser avec les certificats système
+echo "🔧 Configuration de npm pour l'utilisateur appuser..."
+su - appuser -c "npm config set cafile /etc/ssl/certs/ca-certificates.crt && npm config set strict-ssl true" || true
+
 # Changer vers l'utilisateur non-root et démarrer l'application Node.js avec PM2
 echo "📦 Démarrage de l'application Node.js avec PM2..."
 su - appuser -c "/usr/local/bin/pm2-start.sh" &

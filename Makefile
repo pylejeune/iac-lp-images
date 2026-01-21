@@ -1,9 +1,9 @@
 .PHONY: help build run stop clean logs shell test
 
 # Variables
-IMAGE_NAME = app
+IMAGE_NAME = ia-api
 IMAGE_TAG = latest
-CONTAINER_NAME = app-container
+CONTAINER_NAME = ia-api-container
 
 help: ## Afficher l'aide
 	@echo "Commandes disponibles:"
@@ -20,6 +20,8 @@ run: ## Lancer le conteneur
 		--name $(CONTAINER_NAME) \
 		-p 80:80 \
 		-p 443:443 \
+		-p 3000:3000 \
+		-p 3001:3001 \
 		-v $(PWD)/app:/home/appuser/app \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 

@@ -9,6 +9,11 @@ nginx/
 ├── nginx.conf          # Configuration principale Nginx
 ├── conf.d/
 │   └── default.conf    # Configuration du serveur virtuel par défaut
+├── modules-enabled/    # Modules nginx activés
+│   ├── 50-mod-http-image-filter.conf
+│   └── 50-mod-http-xslt-filter.conf
+├── sites-available/    # Configurations de sites disponibles
+│   └── ia-api.conf     # Configuration pour ia-api.livemixr.com
 └── logs/               # Répertoire pour les logs (créé automatiquement)
 ```
 
@@ -17,12 +22,27 @@ nginx/
 ### `nginx.conf`
 Configuration principale de Nginx qui sera montée dans `/etc/nginx/nginx.conf`.
 
+**Modules activés:**
+- `mod-http-image-filter` - Filtrage et transformation d'images
+- `mod-http-xslt-filter` - Transformation XSLT
+- `mod-mail` - Support des protocoles mail (POP3, IMAP)
+- `mod-stream` - Proxy TCP/UDP
+
+### `modules-enabled/`
+Répertoire contenant les fichiers de configuration pour activer les modules nginx dynamiques.
+
+**Modules disponibles:**
+- `50-mod-http-image-filter.conf` - Module de filtrage d'images
+- `50-mod-http-xslt-filter.conf` - Module de transformation XSLT
+
+### `sites-available/ia-api.conf`
+Configuration du serveur virtuel pour `ia-api.livemixr.com`.
+
 **Caractéristiques:**
-- Worker processes: auto (s'adapte au nombre de CPU)
-- Gzip activé
-- Logging configuré
-- SSL/TLS settings
-- Include des configurations dans `conf.d/`
+- Upstream vers `localhost:3000` et `localhost:3001` (load balancing)
+- Proxy vers l'application Node.js
+- Headers de proxy configurés
+- Écoute sur le port 80
 
 ### `conf.d/default.conf`
 Configuration du serveur virtuel par défaut qui sera montée dans `/etc/nginx/conf.d/default.conf`.
@@ -36,6 +56,30 @@ Configuration du serveur virtuel par défaut qui sera montée dans `/etc/nginx/c
 - Support des fichiers statiques
 
 ## 🔧 Personnalisation
+
+### Modules Nginx
+
+Les modules suivants sont installés et activés :
+
+- **mod-http-image-filter** : Filtrage et transformation d'images (redimensionnement, rotation, etc.)
+- **mod-http-xslt-filter** : Transformation XSLT des réponses XML
+- **mod-mail** : Support des protocoles mail (POP3, IMAP) - configuré dans `nginx.conf`
+- **mod-stream** : Proxy TCP/UDP pour les connexions non-HTTP - configuré dans `nginx.conf`
+
+**Utilisation des modules:**
+
+```nginx
+# Exemple avec image-filter
+location /images/ {
+    image_filter resize 800 600;
+    image_filter_jpeg_quality 85;
+}
+
+# Exemple avec xslt-filter
+location /xml/ {
+    xslt_stylesheet /path/to/transform.xsl;
+}
+```
 
 ### Modifier la Configuration
 
