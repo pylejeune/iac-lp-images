@@ -1,0 +1,30 @@
+{
+  "name": "strapi-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Strapi CMS avec PostgreSQL/Aurora",
+  "scripts": {
+    "develop": "strapi develop",
+    "start": "strapi start",
+    "build": "strapi build",
+    "strapi": "strapi"
+  },
+  "dependencies": {
+    "@strapi/strapi": "^4.23.0",
+    "@strapi/plugin-users-permissions": "^4.23.0",
+    "@strapi/plugin-i18n": "^4.23.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {},
+  "author": {
+    "name": "LP Images"
+  },
+  "strapi": {
+    "uuid": "00000000-0000-0000-0000-000000000000"
+  },
+  "engines": {
+    "node": ">=18.0.0 <=22.x.x",
+    "npm": ">=6.0.0"
+  },
+  "license": "MIT"
+}
