@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL pour le développement local
+  postgres:
+    image: postgres:16-alpine
+    container_name: strapi-postgres-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-strapi}
+      POSTGRES_USER: ${DATABASE_USERNAME:-strapi}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT:-5432}:5432"
+    networks:
+      - strapi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-strapi} -d ${DATABASE_NAME:-strapi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service Strapi
+  strapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: strapi:local
+    container_name: strapi-local
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      # Base de données PostgreSQL locale
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-strapi}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-strapi}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-strapi}
+      DATABASE_SSL: false
+      DATABASE_SSL_REJECT_UNAUTHORIZED: false
+      
+      # Sécurité Strapi
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      APP_KEYS: ${APP_KEYS}
+      
+      # Configuration serveur pour développement local
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 1337
+    volumes:
+      # Persister les uploads et les données de l'application
+      - ./public/uploads:/opt/app/public/uploads
+      - ./config:/opt/app/config
+      - ./src:/opt/app/src
+      # Optionnel: pour le développement, vous pouvez monter node_modules en volume
+      # - strapi_node_modules:/opt/app/node_modules
+    ports:
+      - "1337:1337"
+    networks:
+      - strapi-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:1337/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+  # strapi_node_modules:
+  #   driver: local
+
+networks:
+  strapi-network:
+    driver: bridge

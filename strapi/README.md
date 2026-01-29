@@ -10,6 +10,44 @@ Strapi CMS configuré pour fonctionner avec une base de données PostgreSQL/Auro
 
 ## 🚀 Démarrage rapide
 
+### Option 1 : Développement local (recommandé pour tester)
+
+Pour tester Strapi en local avec une base de données PostgreSQL intégrée :
+
+```bash
+# Créer le fichier .env.local (automatique avec make)
+make local-init
+
+# Lancer Strapi avec PostgreSQL en local
+make local-up
+
+# Voir les logs
+make local-logs
+
+# Arrêter
+make local-down
+```
+
+**Accès à Strapi :**
+- **Admin Panel** : http://localhost:1337/admin
+- **API** : http://localhost:1337/api
+
+Le fichier `.env.local` sera créé automatiquement depuis `.env.local.example`. Vous pouvez le modifier pour personnaliser les secrets.
+
+**Génération des secrets pour le développement local :**
+```bash
+# Générer JWT_SECRET
+openssl rand -base64 32
+
+# Générer ADMIN_JWT_SECRET
+openssl rand -base64 32
+
+# Générer APP_KEYS (4 clés séparées par des virgules)
+openssl rand -base64 32,openssl rand -base64 32,openssl rand -base64 32,openssl rand -base64 32
+```
+
+### Option 2 : Production avec Aurora PostgreSQL
+
 ### 1. Configuration
 
 Copiez le fichier `.env.example` vers `.env` et configurez vos variables d'environnement :
@@ -94,13 +132,33 @@ strapi/
 │   ├── api/            # APIs personnalisées
 │   └── index.js        # Bootstrap
 ├── public/             # Fichiers publics (uploads)
-├── Dockerfile          # Image Docker production
-├── docker-compose.yml  # Configuration Docker Compose
-├── .env.example        # Exemple de variables d'environnement
-└── package.json        # Dépendances Node.js
+├── Dockerfile              # Image Docker production
+├── docker-compose.yml      # Configuration Docker Compose (production)
+├── docker-compose.local.yml # Configuration Docker Compose (développement local)
+├── .env.example            # Exemple de variables d'environnement (production)
+├── .env.local.example      # Exemple de variables d'environnement (local)
+└── package.json            # Dépendances Node.js
 ```
 
 ## 🐳 Commandes Docker
+
+### Développement local
+
+```bash
+# Lancer Strapi avec PostgreSQL en local
+make local-up
+
+# Arrêter
+make local-down
+
+# Voir les logs
+make local-logs
+
+# Ouvrir un shell dans le conteneur
+make local-shell
+```
+
+### Production (Aurora PostgreSQL)
 
 ```bash
 # Construire l'image

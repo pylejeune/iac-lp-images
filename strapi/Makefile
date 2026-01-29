@@ -1,9 +1,12 @@
-.PHONY: help build build-no-cache run run-compose stop stop-compose clean clean-all logs logs-compose shell test health stats restart
+.PHONY: help build build-no-cache run run-compose stop stop-compose clean clean-all logs logs-compose shell test health stats restart ecr-login ecr-push local-up local-down local-logs local-shell local-init
 
 # Variables
-IMAGE_NAME = strapi
-IMAGE_TAG = latest
+IMAGE_NAME = shared-images
+IMAGE_TAG = strapi
 CONTAINER_NAME = strapi-container
+AWS_ACCOUNT_ID = 918845180861
+AWS_REGION = eu-west-3
+ECR_REPOSITORY = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(IMAGE_NAME)
 
 help: ## Afficher l'aide
 	@echo "Commandes disponibles:"
@@ -60,3 +63,41 @@ stats: ## Afficher les statistiques du conteneur
 	docker stats $(CONTAINER_NAME)
 
 restart: stop run-compose ## Redémarrer le conteneur (avec docker-compose)
+
+ecr-login: ## S'authentifier avec AWS ECR
+	@echo "Authentification avec AWS ECR..."
+	aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin $(ECR_REPOSITORY)
+
+ecr-tag: build ## Taguer l'image pour ECR
+	docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(ECR_REPOSITORY):$(IMAGE_TAG)
+
+ecr-push: ecr-login ecr-tag ## Pousser l'image vers ECR
+	@echo "Push de l'image vers ECR..."
+	docker push $(ECR_REPOSITORY):$(IMAGE_TAG)
+	@echo "Image poussée avec succès: $(ECR_REPOSITORY):$(IMAGE_TAG)"
+
+# Commandes pour le développement local
+local-init: ## Créer le fichier .env.local depuis l'exemple si il n'existe pas
+	@if [ ! -f .env.local ]; then \
+		cp .env.local.example .env.local; \
+		echo "✅ Fichier .env.local créé depuis .env.local.example"; \
+		echo "⚠️  N'oubliez pas de générer des secrets sécurisés avec: openssl rand -base64 32"; \
+	else \
+		echo "ℹ️  Le fichier .env.local existe déjà"; \
+	fi
+
+local-up: local-init ## Lancer Strapi en local avec docker-compose (PostgreSQL inclus)
+	@echo "🚀 Démarrage de Strapi en local..."
+	docker-compose -f docker-compose.local.yml up -d --build
+	@echo "✅ Strapi est accessible sur http://localhost:1337"
+	@echo "📊 Pour voir les logs: make local-logs"
+
+local-down: ## Arrêter Strapi en local
+	@echo "🛑 Arrêt de Strapi en local..."
+	docker-compose -f docker-compose.local.yml down
+
+local-logs: ## Afficher les logs de Strapi en local
+	docker-compose -f docker-compose.local.yml logs -f strapi
+
+local-shell: ## Ouvrir un shell dans le conteneur Strapi local
+	docker exec -it strapi-local /bin/bash
