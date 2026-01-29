@@ -6,13 +6,10 @@ FROM ubuntu:24.04 AS base
 
 # Variables d'environnement pour éviter les prompts interactifs
 ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_VERSION_FULL="22.11.0" \
-    ARCH="x64"
+    NODE_VERSION_FULL="22.11.0"
 
-# Installer les dépendances système de base (cache layer)
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+# Installer les dépendances système de base
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         curl \
         ca-certificates \
@@ -23,7 +20,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     update-ca-certificates
 
 # Installer Node.js 22.11.0 LTS (cache layer - change très rarement)
-RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION_FULL}/node-v${NODE_VERSION_FULL}-linux-${ARCH}.tar.xz" -o /tmp/node.tar.xz && \
+# Détecter l'architecture automatiquement (x64 ou arm64)
+RUN ARCH=$(uname -m) && \
+    case "$ARCH" in \
+        x86_64) ARCH="x64" ;; \
+        aarch64|arm64) ARCH="arm64" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    echo "Installing Node.js ${NODE_VERSION_FULL} for architecture: ${ARCH}" && \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION_FULL}/node-v${NODE_VERSION_FULL}-linux-${ARCH}.tar.xz" -o /tmp/node.tar.xz && \
     tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 && \
     rm -f /tmp/node.tar.xz && \
     ln -sf /usr/local/bin/node /usr/bin/node && \
@@ -36,9 +41,7 @@ RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION_FULL}/node-v${NODE_VERSI
 FROM base AS builder-base
 
 # Installer les dépendances système nécessaires pour le build
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         python3 \
@@ -70,10 +73,9 @@ WORKDIR /opt
 # Copier uniquement les fichiers de dépendances (layer cacheable)
 COPY package.json package-lock.json* ./
 
-# Installer les dépendances avec cache npm (toutes pour le build)
-RUN --mount=type=cache,target=/root/.npm,sharing=locked \
-    npm config set fetch-retry-maxtimeout 600000 && \
-    npm ci --prefer-offline --no-audit && \
+# Installer les dépendances npm
+RUN npm config set fetch-retry-maxtimeout 600000 && \
+    npm install --no-audit && \
     npm cache clean --force
 
 ################################################################################
@@ -109,9 +111,7 @@ RUN groupadd -r appuser && \
     chown -R appuser:appuser /home/appuser /opt/app
 
 # Installer les dépendances système runtime uniquement (plus légères)
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         procps \
         libvips-dev \

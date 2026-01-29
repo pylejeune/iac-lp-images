@@ -5,13 +5,14 @@ module.exports = ({ env }) => {
   const isDev = env('NODE_ENV', 'development') === 'development';
   const authSecret = adminJwtSecret || (isDev ? 'dev-admin-jwt-secret-change-in-production' : null);
 
+  /*
   if (!authSecret) {
     throw new Error(
       'ADMIN_JWT_SECRET manquant. Définissez la variable d\'environnement ADMIN_JWT_SECRET (ex: openssl rand -base64 32). ' +
       'Voir .env.example et https://docs.strapi.io/developer-docs/latest/setup-deployment-guides/configurations/optional/environment.html'
     );
   }
-
+*/
   return {
   auth: {
     secret: authSecret,

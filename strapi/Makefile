@@ -107,7 +107,7 @@ local-init: ## Créer .env.local depuis .env.local.example si absent
 
 local-up: local-init ## Lancer Strapi en local (PostgreSQL inclus)
 	@echo "🚀 Démarrage de Strapi en local..."
-	@HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= NO_PROXY= no_proxy= docker-compose -f docker-compose.local.yml build --no-cache
+	@HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= NO_PROXY= no_proxy= docker-compose -f docker-compose.local.yml build
 	@HTTP_PROXY= HTTPS_PROXY= http_proxy= https_proxy= NO_PROXY= no_proxy= docker-compose -f docker-compose.local.yml up -d
 	@echo "✅ Strapi: http://localhost:1337 — Admin: http://localhost:1337/admin"
 	@echo "📊 Logs: make local-logs"

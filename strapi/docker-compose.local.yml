@@ -23,7 +23,7 @@ services:
 
   # Service Strapi
   strapi:
-    platform: linux/amd64
+    # Note: pas de platform forcée - utilise l'architecture native (arm64 sur Mac M1/M2/M3)
     build:
       context: .
       dockerfile: Dockerfile.dev
