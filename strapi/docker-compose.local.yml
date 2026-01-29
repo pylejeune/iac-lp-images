@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Base de données PostgreSQL pour le développement local
   postgres:
@@ -25,10 +23,19 @@ services:
 
   # Service Strapi
   strapi:
+    platform: linux/amd64
     build:
       context: .
-      dockerfile: Dockerfile
-    image: strapi:local
+      dockerfile: Dockerfile.dev
+      network: host
+      args:
+        - HTTP_PROXY=
+        - HTTPS_PROXY=
+        - http_proxy=
+        - https_proxy=
+        - NO_PROXY=
+        - no_proxy=
+    image: strapi:local-dev
     container_name: strapi-local
     restart: unless-stopped
     env_file:
@@ -58,8 +65,8 @@ services:
       - ./public/uploads:/opt/app/public/uploads
       - ./config:/opt/app/config
       - ./src:/opt/app/src
-      # Optionnel: pour le développement, vous pouvez monter node_modules en volume
-      # - strapi_node_modules:/opt/app/node_modules
+      # Monter node_modules pour éviter les problèmes de permissions
+      - strapi_node_modules:/opt/app/node_modules
     ports:
       - "1337:1337"
     networks:
@@ -77,8 +84,8 @@ services:
 volumes:
   postgres_data:
     driver: local
-  # strapi_node_modules:
-  #   driver: local
+  strapi_node_modules:
+    driver: local
 
 networks:
   strapi-network:

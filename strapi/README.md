@@ -133,6 +133,7 @@ strapi/
 │   └── index.js        # Bootstrap
 ├── public/             # Fichiers publics (uploads)
 ├── Dockerfile              # Image Docker production
+├── Dockerfile.dev          # Image Docker développement local (Alpine)
 ├── docker-compose.yml      # Configuration Docker Compose (production)
 ├── docker-compose.local.yml # Configuration Docker Compose (développement local)
 ├── .env.example            # Exemple de variables d'environnement (production)
@@ -189,11 +190,49 @@ docker-compose exec strapi sh
 
 ## 🐛 Dépannage
 
+### Problème de proxy d'entreprise lors du build Docker
+
+Si vous rencontrez des erreurs liées au proxy (ex: `emea-private-zscaler.proxy.lvmh`), vous pouvez :
+
+**Option 1 : Désactiver temporairement le proxy Docker**
+```bash
+# Vérifier les variables de proxy Docker
+echo $HTTP_PROXY
+echo $HTTPS_PROXY
+
+# Désactiver temporairement pour le build
+unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+make local-up
+
+# Ou désactiver uniquement pour Docker
+docker build --network=host -f Dockerfile.dev .
+```
+
+**Option 2 : Configurer le proxy Docker correctement**
+```bash
+# Créer/modifier ~/.docker/config.json
+mkdir -p ~/.docker
+cat > ~/.docker/config.json << EOF
+{
+  "proxies": {
+    "default": {
+      "httpProxy": "",
+      "httpsProxy": "",
+      "noProxy": "localhost,127.0.0.1"
+    }
+  }
+}
+EOF
+```
+
+**Option 3 : Utiliser --network=host**
+Le Dockerfile.dev utilise déjà Alpine Linux qui devrait mieux gérer le proxy. Si le problème persiste, vous pouvez modifier le docker-compose.local.yml pour ajouter `network_mode: host` au service strapi.
+
 ### Erreur de connexion à la base de données
 
 Vérifiez :
-1. Les variables d'environnement dans `.env`
-2. Que le cluster Aurora est accessible depuis votre réseau
+1. Les variables d'environnement dans `.env.local` (pour le développement local)
+2. Que le cluster Aurora est accessible depuis votre réseau (pour la production)
 3. Les règles de sécurité (Security Groups) pour autoriser le trafic depuis le conteneur
 4. Les paramètres SSL si nécessaire
 
@@ -201,13 +240,15 @@ Vérifiez :
 
 ```bash
 # Vérifier les logs
-docker-compose logs strapi
+make local-logs
+# ou
+docker-compose -f docker-compose.local.yml logs strapi
 
 # Vérifier le statut
-docker-compose ps
+docker-compose -f docker-compose.local.yml ps
 
 # Reconstruire l'image
-docker-compose build --no-cache
+docker-compose -f docker-compose.local.yml build --no-cache
 ```
 
 ### Première installation
