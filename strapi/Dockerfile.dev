@@ -1,8 +1,14 @@
 ################################################################################
 # Dockerfile pour le développement local
-# Basé sur Ubuntu 24.04
+# Basé sur Ubuntu 24.04 avec build multi-stage pour optimiser le cache
 ################################################################################
-FROM ubuntu:24.04
+
+################################################################################
+# Stage 1: Base - Installation des dépendances système et Node.js
+# Ce stage est mis en cache et ne sera reconstruit que si les dépendances
+# système changent
+################################################################################
+FROM ubuntu:24.04 AS base
 
 # Arguments de build pour désactiver le proxy
 ARG HTTP_PROXY=
@@ -78,6 +84,13 @@ RUN groupadd -r appuser && \
     mkdir -p /home/appuser && \
     chown -R appuser:appuser /home/appuser
 
+################################################################################
+# Stage 2: Dependencies - Installation des dépendances npm
+# Ce stage est mis en cache et ne sera reconstruit que si package.json ou
+# package-lock.json changent
+################################################################################
+FROM base AS dependencies
+
 # Créer les répertoires nécessaires
 RUN mkdir -p /opt/app && \
     chown -R appuser:appuser /opt/app
@@ -85,7 +98,7 @@ RUN mkdir -p /opt/app && \
 # Définir le répertoire de travail
 WORKDIR /opt/app
 
-# Copier les fichiers de dépendances
+# Copier uniquement les fichiers de dépendances
 COPY package.json package-lock.json* ./
 
 # Désactiver la vérification SSL pour npm (environnements avec proxy d'entreprise)
@@ -93,7 +106,15 @@ RUN npm config set strict-ssl false && \
     npm config set registry https://registry.npmjs.org/
 
 # Installer les dépendances
+# Cette étape sera mise en cache si package.json et package-lock.json n'ont pas changé
 RUN npm install
+
+################################################################################
+# Stage 3: Development - Image finale pour le développement
+# Ce stage copie les dépendances installées et le code source
+# Il sera reconstruit à chaque changement de code source
+################################################################################
+FROM dependencies AS development
 
 # Copier le reste de l'application
 COPY --chown=appuser:appuser . .

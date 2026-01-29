@@ -1,3 +1,14 @@
 ia-api/app/node_modules/
 ia-api/nginx/logs/
 strapi/node_modules/
+*.vscode/
+*.idea/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.log
+*.pid
+*.seed
+*.pid.lock
