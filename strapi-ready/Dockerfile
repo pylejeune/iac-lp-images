@@ -3,7 +3,7 @@
 # Container qui reste up sans exécuter automatiquement npm install/run/build
 # Utiliser entrypoint.sh pour lancer les commandes manuellement
 ################################################################################
-FROM node:22-alpine AS base
+FROM node:18-alpine AS base
 
 # Métadonnées
 LABEL maintainer="LP Images"
@@ -21,6 +21,7 @@ ENV NODE_ENV=development \
 # - git : pour certaines dépendances npm
 # - vips-dev : traitement d'images (sharp/libvips pour Strapi)
 # - autoconf/automake : outils de build
+# - openssh : client et serveur SSH
 RUN apk add --no-cache \
     build-base \
     python3 \
@@ -33,8 +34,9 @@ RUN apk add --no-cache \
     nasm \
     curl \
     bash \
+    openssh \
     && npm config set registry https://registry.npmjs.org/ \
-    && npm install -g node-gyp
+    && npm install -g node-gyp pm2
 
 # Créer un utilisateur non-root
 RUN addgroup -g 1001 -S appuser \
